@@ -1,0 +1,22 @@
+{
+	"name": "dvijcock",
+	"version": "1.0.0",
+	"description": "3D web game engine that use Svelte + Three.js + Ammo.js",
+	"main": "dvijcock.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/raidan00/dvijcock.git"
+	},
+	"homepage": "https://github.com/raidan00/dvijcock",
+	"keywords": [
+		"3D",
+		"Web",
+		"Game",
+		"Engine"
+	],
+	"author": "raidan00",
+	"license": "MIT"
+}
