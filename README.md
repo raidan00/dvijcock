@@ -3,7 +3,7 @@
 Name derived from russian word "движкок" that mean engine. <br/>
 In source code you will often see short version of name dvijcock. - dc.
 ## Learn
-For using Dvijcock you need to know JavaScript Svelte, Three.js and Ammo.js.<br/>
+For using Dvijcock you need to know JavaScript, Svelte, Three.js and Ammo.js.<br/>
 For start read source code with comments of simpliest Dvijcock example.
 https://github.com/raidan00/hello-dvijcock
 ## Advanced learn
