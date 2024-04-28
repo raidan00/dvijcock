@@ -3,6 +3,7 @@ import renderer from "dvijcock/single/renderer.js"
 import Resizer from "dvijcock/Resizer.js"
 import ammoTmp from 'dvijcock/ammoTmp.js';
 import config from "dvijcock/config.js";
+import prepareDcData from "dvijcock/prepareDcData.js";
 
 export default class {
 	constructor(){ 
@@ -46,22 +47,7 @@ export default class {
 		);
 	}
 	addObjToPhysicsWorld(objThree){
-		//create btShape
-		if(objThree.dcData.btShape === true){
-			if(objThree.geometry.type === 'SphereGeometry'){
-				objThree.dcData.btShape = new Ammo.btSphereShape(objThree.scale.x);
-			}else if(objThree.geometry.type === 'BoxGeometry'){
-				objThree.dcData.btShape = new Ammo.btBoxShape(
-					ammoTmp.vec(objThree.scale.x*0.5, objThree.scale.y*0.5, objThree.scale.z*0.5)
-				);
-			}else if(objThree.geometry.type === 'CylinderGeometry'){
-				objThree.dcData.btShape = new Ammo.btCylinderShape(
-					ammoTmp.vec(objThree.scale.x, objThree.scale.y*0.5, objThree.scale.z)
-				);
-			}
-		}
-		objThree.dcData.btShape.setMargin(0.05);
-		//create rBody
+		prepareDcData(objThree);
 		let pos = new t.Vector3();
 		objThree.getWorldPosition(pos);
 		let quat = new t.Quaternion();
@@ -93,7 +79,7 @@ export default class {
 	addObj(objThree){
 		if(!objThree.parent)this.scene.add(objThree);
 		let addRecursion =(objThree)=>{
-			if(objThree?.dcData?.btShape){
+			if(objThree?.dcData?.btShape || objThree?.userData?.btShape){
 				this.addObjToPhysicsWorld(objThree)
 			}else if(objThree?.children?.length){
 				for(let i=0; i<objThree.children.length; i++){
