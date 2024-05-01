@@ -76,7 +76,7 @@ export default class {
 		objThree.dcData.rbody = rbody;
 		this.physicsWorld.addRigidBody(rbody);
 	}
-	addObj(objThree){
+	add(objThree){
 		if(!objThree.parent)this.scene.add(objThree);
 		let addRecursion =(objThree)=>{
 			if(objThree?.dcData?.btShape || objThree?.userData?.btShape){
@@ -89,7 +89,7 @@ export default class {
 		}
 		addRecursion(objThree);
 	}
-	removeObj(objThree){
+	remove(objThree){
 		objThree.removeFromParent();
 		let removeRecursion =(objThree)=>{
 			this.destroyObj(objThree);
