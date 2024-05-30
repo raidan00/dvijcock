@@ -8,7 +8,7 @@ export default class {
 	constructor(objThree, controls, pushForce, maxSpeed){ 
 		pushForce *= 10;
 		objThree.dcData.rbody.setActivationState(4)
-		function tickBeforePhysics(){
+		function onBeforePhysics(){
 			if(moveDirection.forward == 0 && moveDirection.right  == 0) return;
 			if(controls.getAzimuthalAngle){
 				var pushAng = moveDirection.angle - controls.getAzimuthalAngle() - Math.PI/2;
@@ -28,11 +28,9 @@ export default class {
 			pushVec.multiplyScalar(pushForce*moveDirection.touchFactor);
 			objThree.dcData.rbody.applyCentralForce(ammoTmp.vec(pushVec.x, 0, pushVec.y));
 		}
-		if(!objThree.dcData.tickBeforePhysics){
-			objThree.dcData.tickBeforePhysics = tickBeforePhysics;
-		}else{
-			objThree.dcData.tickBeforePhysics = [objThree.dcData.tickBeforePhysics, tickBeforePhysics];
-		}
+		objThree.dcData.onBeforePhysics.push(onBeforePhysics);
+		this.onBeforePhysics = onBeforePhysics;
+		this.objThree = objThree;
 		this.div = document.createElement('div');
 		this.div.className = 'dvijcock-conroller';
 		document.body.appendChild(this.div);
@@ -43,5 +41,6 @@ export default class {
 	destroy(){
 		this.app.$destroy();
 		this.div.remove();
+		this.objThree.dcData.onBeforePhysics.splice(this.objThree.dcData.onBeforePhysics.indexOf(this.onBeforePhysics, 1));
 	}
 }

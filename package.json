@@ -1,6 +1,6 @@
 {
 	"name": "dvijcock",
-	"version": "1.0.3",
+	"version": "1.0.4",
 	"description": "3D web game engine that use Svelte + Three.js + Ammo.js",
 	"main": "dvijcock.js",
 	"repository": {

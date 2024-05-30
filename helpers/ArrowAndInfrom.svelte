@@ -27,7 +27,8 @@
 		border: 2px solid black;
 		border-radius: 5px;
 		color: black;
-		margin-top: 11vw;
+		margin-top: 4vw;
+		white-space: break-spaces;
 	}
 </style>
 

@@ -1,4 +1,5 @@
 import "dvijcock/ammoImportFixed.js"
+import "dvijcock/threeInject.js"
 import { ammoTmpInit } from "dvijcock/ammoTmp.js"
 
 export default ()=>{

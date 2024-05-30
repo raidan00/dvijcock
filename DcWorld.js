@@ -3,8 +3,13 @@ import renderer from "dvijcock/single/renderer.js"
 import Resizer from "dvijcock/Resizer.js"
 import ammoTmp from 'dvijcock/ammoTmp.js';
 import config from "dvijcock/config.js";
-import prepareDcData from "dvijcock/prepareDcData.js";
+import btShapeCreate from "dvijcock/btShapeCreate.js";
 
+function runFuncArr(fucnArr, ...rest){
+	for(let func of fucnArr){
+		func(...rest);
+	}
+}
 export default class {
 	constructor(){ 
 		this.renderer = renderer;
@@ -27,9 +32,9 @@ export default class {
 		let tickDispayFps =()=>{
 			if(this.destroyed) return;
 			let deltaTime = clock.getDelta();
-			this.tickBeforePhysics(deltaTime);
+			this.onBeforePhysics(deltaTime);
 			this.updateDynamic(deltaTime);
-			this.tickAfterPhysics(deltaTime);
+			this.onAfterPhysics(deltaTime);
 			this.onCollision();
 			this.renderer.render( this.scene, this.camera );
 			requestAnimationFrame(tickDispayFps);
@@ -47,7 +52,6 @@ export default class {
 		);
 	}
 	addObjToPhysicsWorld(objThree){
-		prepareDcData(objThree);
 		let pos = new t.Vector3();
 		objThree.getWorldPosition(pos);
 		let quat = new t.Quaternion();
@@ -57,6 +61,8 @@ export default class {
 		transform.setRotation(ammoTmp.quat(quat.x, quat.y, quat.z, quat.w));
 		let motionState = new Ammo.btDefaultMotionState(transform);
 		let localInertia = ammoTmp.vec(0, 0, 0);
+
+		objThree.dcData.btShape.setMargin(objThree.dcData.setMargin || config.setMargin);
 		objThree.dcData.btShape.calculateLocalInertia(objThree.dcData.mass ?? 0, localInertia);
 		let rbInfo = new Ammo.btRigidBodyConstructionInfo(
 			objThree.dcData.mass ?? 0, motionState, objThree.dcData.btShape, localInertia
@@ -74,12 +80,25 @@ export default class {
 		}
 		rbody.objThree = objThree;
 		objThree.dcData.rbody = rbody;
-		this.physicsWorld.addRigidBody(rbody);
+		objThree.dcData.onBeforePhysics = [];
+		objThree.dcData.onAfterPhysics = [];
+		objThree.dcData.onCollision = [];
+
+		let collisionGroup = objThree.dcData.collisionGroup || objThree.dcData.collisionFilter
+			|| objThree.userData.collisionGroup || objThree.userData.collisionFilter
+			|| config.collisionGroup || config.collisionFilter || 0b111111111111111111111111;
+		let collisionMask = objThree.dcData.collisionMask || objThree.dcData.collisionFilter
+			|| objThree.userData.collisionMask || objThree.userData.collisionFilter
+			|| config.collisionMask || config.collisionFilter || 0b111111111111111111111111;
+		this.physicsWorld.addRigidBody(rbody, collisionGroup, collisionMask);
 	}
 	add(objThree){
 		if(!objThree.parent)this.scene.add(objThree);
 		let addRecursion =(objThree)=>{
-			if(objThree?.dcData?.btShape || objThree?.userData?.btShape){
+			if(objThree?.dcData?.btShape){
+				this.addObjToPhysicsWorld(objThree)
+			}else if(objThree?.dcData?.physicsShape || objThree?.userData?.physicsShape){
+				btShapeCreate(objThree);
 				this.addObjToPhysicsWorld(objThree)
 			}else if(objThree?.children?.length){
 				for(let i=0; i<objThree.children.length; i++){
@@ -99,34 +118,22 @@ export default class {
 		}
 		removeRecursion(objThree);
 	}
-	tickAfterPhysics(deltaTime){
-		let arr = [];
+	onBeforePhysics(deltaTime){
+		let objArr = [];
 		this.scene.traverse((objThree)=>{
-			if(objThree?.dcData?.tickAfterPhysics)arr.push(objThree);
+			if(objThree?.dcData?.onBeforePhysics?.length)objArr.push(objThree);
 		});
-		for(let el of arr){
-			if(typeof el.dcData.tickAfterPhysics == 'function'){
-				el.dcData.tickAfterPhysics(deltaTime);
-			}else{
-				for(let func of el.dcData.tickAfterPhysics){
-					func(deltaTime);
-				}
-			}
+		for(let objThree of objArr){
+			runFuncArr(objThree.dcData.onBeforePhysics, deltaTime);
 		}
 	}
-	tickBeforePhysics(deltaTime){
-		let arr = [];
+	onAfterPhysics(deltaTime){
+		let objArr = [];
 		this.scene.traverse((objThree)=>{
-			if(objThree?.dcData?.tickBeforePhysics)arr.push(objThree);
+			if(objThree?.dcData?.onAfterPhysics?.length)objArr.push(objThree);
 		});
-		for(let el of arr){
-			if(typeof el.dcData.tickBeforePhysics == 'function'){
-				el.dcData.tickBeforePhysics(deltaTime);
-			}else{
-				for(let func of el.dcData.tickBeforePhysics){
-					func(deltaTime);
-				}
-			}
+		for(let objThree of objArr){
+			runFuncArr(objThree.dcData.onAfterPhysics, deltaTime);
 		}
 	}
 	updateDynamic(deltaTime){
@@ -163,8 +170,8 @@ export default class {
 				//if(distance > 0.0) continue;
 				let rb0 = Ammo.castObject(contactManifold.getBody0(), Ammo.btRigidBody);
 				let rb1 = Ammo.castObject(contactManifold.getBody1(), Ammo.btRigidBody);
-				if(rb0.objThree?.dcData?.onCollision) rb0.objThree.dcData.onCollision(rb1.objThree);
-				if(rb1.objThree?.dcData?.onCollision) rb1.objThree.dcData.onCollision(rb0.objThree);
+				if(rb0.objThree?.dcData?.onCollision?.length) runFuncArr(rb0.objThree.dcData.onCollision, rb1.objThree);
+				if(rb1.objThree?.dcData?.onCollision?.length) runFuncArr(rb1.objThree.dcData.onCollision, rb0.objThree);
 				continue mainLoop;
 			}
 		}
@@ -180,6 +187,7 @@ export default class {
 		rigidBody.getMotionState().__destroy__();
 		rigidBody.getCollisionShape().__destroy__();
 		rigidBody.__destroy__();
+		if(objThree.dcData.btTriangleMesh)objThree.dcData.btTriangleMesh.__destroy__();
 	}
 	destroy(){
 		if(this.destroyed) return;
