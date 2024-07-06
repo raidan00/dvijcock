@@ -5,19 +5,21 @@ import ammoTmp from "dvijcock/ammoTmp.js"
 
 //controls is OrbitControls or Camera
 export default class {
-	constructor(objThree, controls, pushForce, maxSpeed){ 
+	constructor(target, controls, pushForce, maxSpeed){ 
+		this.target = target;
 		pushForce *= 10;
-		objThree.dcData.rbody.setActivationState(4)
-		function onBeforePhysics(){
+		this.target.dcData.rbody.setActivationState(4)
+		this.onBeforePhysics =()=>{
 			if(moveDirection.forward == 0 && moveDirection.right  == 0) return;
 			if(controls.getAzimuthalAngle){
 				var pushAng = moveDirection.angle - controls.getAzimuthalAngle() - Math.PI/2;
+			}else if(controls.theta){
+				var pushAng = moveDirection.angle - controls.theta - Math.PI/2;
 			}else{
-				var pushAng = moveDirection.angle - Math.PI +
-					new t.Vector2(controls.position.x, controls.position.z).angle();
+				console.error("MoveControllsr ERROR: no theta!!!");
 			}
 			var pushVec = new t.Vector2( Math.cos(pushAng), Math.sin(pushAng));
-			let velocity = objThree.dcData.rbody.getLinearVelocity();
+			let velocity = this.target.dcData.rbody.getLinearVelocity();
 			let velVec = new t.Vector2(velocity.x(), velocity.z());
 			if(velVec.length()>maxSpeed && pushVec.angleTo(velVec) < Math.PI/2){
 				let velAngle = velVec.angle();
@@ -26,11 +28,9 @@ export default class {
 				pushVec.multiplyScalar(Math.cos(pushAng-perpendicular));
 			};
 			pushVec.multiplyScalar(pushForce*moveDirection.touchFactor);
-			objThree.dcData.rbody.applyCentralForce(ammoTmp.vec(pushVec.x, 0, pushVec.y));
+			this.target.dcData.rbody.applyCentralForce(ammoTmp.vec(pushVec.x, 0, pushVec.y));
 		}
-		objThree.dcData.onBeforePhysics.push(onBeforePhysics);
-		this.onBeforePhysics = onBeforePhysics;
-		this.objThree = objThree;
+		this.target.dcData.onBeforePhysics.push(this.onBeforePhysics);
 		this.div = document.createElement('div');
 		this.div.className = 'dvijcock-conroller';
 		document.body.appendChild(this.div);
@@ -38,9 +38,15 @@ export default class {
 			target: this.div,
 		})
 	}
+	setTarget(target){
+		this.target.dcData.onBeforePhysics.splice(this.target.dcData.onBeforePhysics.indexOf(this.onBeforePhysics, 1));
+		this.target = target;
+		this.target.dcData.rbody.setActivationState(4)
+		this.target.dcData.onBeforePhysics.push(this.onBeforePhysics);
+	}
 	destroy(){
 		this.app.$destroy();
 		this.div.remove();
-		this.objThree.dcData.onBeforePhysics.splice(this.objThree.dcData.onBeforePhysics.indexOf(this.onBeforePhysics, 1));
+		this.target.dcData.onBeforePhysics.splice(this.target.dcData.onBeforePhysics.indexOf(this.onBeforePhysics, 1));
 	}
 }

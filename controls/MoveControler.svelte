@@ -2,18 +2,18 @@
 	import * as t from 'three';
 	import moveDirection from './moveDirection.js';
 
-	window.addEventListener("keydown", (e) => {
+	function onKeyDown(e){
 		if (e.code == "KeyW") moveDirection.moveForward(1);
 		if (e.code == "KeyS") moveDirection.moveForward(-1);
 		if (e.code == "KeyD") moveDirection.moveRight(1);
 		if (e.code == "KeyA") moveDirection.moveRight(-1);
-	});
-	window.addEventListener("keyup", (e) => {
+	}
+	function onKeyUp(e){
 		if (e.code == "KeyW") moveDirection.moveForward(0);
 		if (e.code == "KeyS") moveDirection.moveForward(0);
 		if (e.code == "KeyD") moveDirection.moveRight(0);
 		if (e.code == "KeyA") moveDirection.moveRight(0);
-	});
+	}
 
 	let touchMain;
 	let touchDirection;
@@ -46,6 +46,7 @@
 	}
 </script>
 
+<svelte:window on:keydown={onKeyDown} on:keyup={onKeyUp}/>
 {#if 'ontouchstart' in document.documentElement}
 	<div
 		class="touchMain"

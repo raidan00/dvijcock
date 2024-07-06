@@ -22,12 +22,20 @@ export default function(objThree){
 		let physicsShape = objThree.userData.physicsShape;
 		if(!objThree.dcData)objThree.dcData={};
 		if(!objThree.dcData.mass)objThree.dcData.mass = objThree.userData.mass;
+		if(objThree.userData.kinematic)objThree.dcData.kinematic = true;
 		if(physicsShape === true && (objThree.name.includes("Sphere") || objThree.name.includes("Icosphere"))){
 			objThree.dcData.btShape = new Ammo.btSphereShape(objThree.scale.x);
 		}else if(physicsShape === true && objThree.name.includes("Cube")){
 			objThree.dcData.btShape = new Ammo.btBoxShape(
 				ammoTmp.vec(objThree.scale.x, objThree.scale.y, objThree.scale.z)
 			);
+		}else if(typeof physicsShape == "string" && physicsShape.includes("Cube")){
+			let regResult = physicsShape.match(/Cube ([0-9\.]+) ([0-9\.]+) ([0-9\.]+)/);
+			if(!regResult)console.error("Dvijcock error: wrong Cylinder shape fromat");
+			let x = parseFloat(regResult[1]);
+			let y = parseFloat(regResult[2]);
+			let z = parseFloat(regResult[3]);
+			objThree.dcData.btShape = new Ammo.btBoxShape(ammoTmp.vec(x, y, z));
 		}else if(physicsShape === true && objThree.name.includes("Cylinder")){
 			objThree.dcData.btShape = new Ammo.btCylinderShape(
 				ammoTmp.vec(objThree.scale.x, objThree.scale.y, objThree.scale.z)

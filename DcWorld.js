@@ -33,6 +33,7 @@ export default class {
 			if(this.destroyed) return;
 			let deltaTime = clock.getDelta();
 			this.onBeforePhysics(deltaTime);
+			this.moveKinematic();
 			this.updateDynamic(deltaTime);
 			this.onAfterPhysics(deltaTime);
 			this.onCollision();
@@ -83,6 +84,7 @@ export default class {
 		objThree.dcData.onBeforePhysics = [];
 		objThree.dcData.onAfterPhysics = [];
 		objThree.dcData.onCollision = [];
+		objThree.dcData.onDestroy = [];
 
 		let collisionGroup = objThree.dcData.collisionGroup || objThree.dcData.collisionFilter
 			|| objThree.userData.collisionGroup || objThree.userData.collisionFilter
@@ -136,6 +138,22 @@ export default class {
 			runFuncArr(objThree.dcData.onAfterPhysics, deltaTime);
 		}
 	}
+	moveKinematic(){
+		this.scene.traverse((objThree)=>{
+			if(objThree?.dcData?.kinematic !== true) return;
+			let pos = new t.Vector3();
+			objThree.getWorldPosition(pos);
+			let quat = new t.Quaternion();
+			objThree.getWorldQuaternion(quat);
+
+			let motionState = objThree.dcData.rbody.getMotionState();
+			let transform = ammoTmp.transform();
+			transform.setIdentity();
+			transform.setOrigin(ammoTmp.vec(pos.x, pos.y, pos.z));
+			transform.setRotation(ammoTmp.quat(quat.x, quat.y, quat.z, quat.w));
+			motionState.setWorldTransform(transform);
+		});
+	}
 	updateDynamic(deltaTime){
 		this.physicsWorld.stepSimulation(deltaTime, 10);
 		let tmpTrans = new Ammo.btTransform();
@@ -179,8 +197,8 @@ export default class {
 	destroyObj(objThree){
 		if(objThree?.geometry?.dispose) objThree.geometry.dispose();
 		if(objThree?.material?.dispose) objThree.material.dispose();
-		//in future add TEXTURE dispose;
-		if(objThree?.dcData?.onDestroy)objThree.dcData.onDestroy();
+		if(objThree?.material?.map?.dispose) objThree.material.map.dispose();
+		if(objThree?.dcData?.onDestroy)runFuncArr(objThree.dcData.onDestroy);
 		if(!objThree.dcData?.rbody)return;
 		let rigidBody = objThree.dcData.rbody;
 		this.physicsWorld.removeRigidBody(rigidBody);
